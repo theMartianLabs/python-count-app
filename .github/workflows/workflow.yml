@@ -24,27 +24,27 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-session-name: GitHubActions
 
-      - name: Test AWS Access
-        run: |
-          aws sts get-caller-identity || { echo "Failed to authenticate with AWS"; exit 1; }
+    #   - name: Test AWS Access
+    #     run: |
+    #       aws sts get-caller-identity || { echo "Failed to authenticate with AWS"; exit 1; }
 
       - name: Log in to Amazon ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
-    #   - name: Set up Docker Buildx
-    #     uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    #   - name: Build and push Docker image
-    #     env:
-    #       ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-    #       ECR_REPOSITORY: my-repo-name  # Replace with your ECR repository name
-    #       IMAGE_TAG: ${{ github.sha }}  # Use commit SHA as tag, or customize (e.g., 'latest')
-    #     run: |
-    #       # Build Docker image
-    #       docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-    #       # Push Docker image to ECR
-    #       docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.AWS_ECR_NAME }} #my-repo-name  # Replace with your ECR repository name
+          IMAGE_TAG: ${{ github.run_number }}  # Use commit SHA as tag, or customize (e.g., 'latest')
+        run: |
+          # Build Docker image
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          # Push Docker image to ECR
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
  
 
