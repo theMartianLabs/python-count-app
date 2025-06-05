@@ -29,14 +29,19 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
         role-session-name: GitHubActions
 
-    - name: SonarQube Scan
-      uses: SonarSource/sonarqube-scan-action@v3
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+################################################################
+###               SONAR CLOUD SCAN                           ###
+### Drops the build if any bugs or vulnerabilities are found.###
+###            Using the default quality gate.               ###
+###        Connected to my personal Sonar Cloud account      ###
+################################################################
+    - uses: actions/checkout@v4
       with:
-        args: >
-          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v5
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  
 
     - name: Determine Next Version
       id: next_version
