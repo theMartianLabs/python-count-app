@@ -128,20 +128,49 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: python-count-app
         IMAGE_TAG: ${{ needs.build-and-push.outputs.next_version_tag }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
       run: |
         echo "$EC2_SSH_KEY" > ssh_key.pem
         chmod 600 ssh_key.pem
 
-        ssh -o StrictHostKeyChecking=no -i ssh_key.pem $EC2_USER@$EC2_HOST << 'EOF'
-          export AWS_DEFAULT_REGION=eu-west-1
-          aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
-          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker stop python-count-app || true
-          docker rm python-count-app || true
-          docker run -d --name python-count-app \
+        ssh -o StrictHostKeyChecking=no -i ssh_key.pem $EC2_USER@$EC2_HOST << EOF
+        export AWS_DEFAULT_REGION=$AWS_REGION
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+        docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker stop python-count-app || true
+        docker rm python-count-app || true
+        docker run -d --name python-count-app \
             -p 8080:8080 \
             $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker image prune -f
+        docker image prune -f
         EOF
 
         rm -f ssh_key.pem
+
+
+
+
+
+
+    # - name: Deploy to EC2
+    #   env:
+    #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+    #     ECR_REPOSITORY: python-count-app
+    #     IMAGE_TAG: ${{ needs.build-and-push.outputs.next_version_tag }}
+    #   run: |
+    #     echo "$EC2_SSH_KEY" > ssh_key.pem
+    #     chmod 600 ssh_key.pem
+
+    #     ssh -o StrictHostKeyChecking=no -i ssh_key.pem $EC2_USER@$EC2_HOST << 'EOF'
+    #       export AWS_DEFAULT_REGION=eu-west-1
+    #       aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
+    #       docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    #       docker stop python-count-app || true
+    #       docker rm python-count-app || true
+    #       docker run -d --name python-count-app \
+    #         -p 8080:8080 \
+    #         $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    #       docker image prune -f
+    #     EOF
+
+    #     rm -f ssh_key.pem
